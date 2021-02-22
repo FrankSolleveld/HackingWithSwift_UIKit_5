@@ -7,8 +7,6 @@
 
 /*
  CHALLENGE TIME
- 1. Disallow answers that are shorter than three letters (isReal 3 letter check) or are just our start word.
- 2. Refactor all the else statements we just added so that they call a new Method called showErrorMessage().
  3. Add a left bar button item that calls startGame(),so that users can restart with a new word whenever they want to.
  BONUS: Fix the uppercase and lowercase bug.
  */
@@ -58,31 +56,30 @@ class ViewController: UITableViewController {
     
     func submit(_ answer: String) {
         let lowerAnswer = answer.lowercased()
-        let errorTitle: String
-        let errorMessage: String
         if isPossible(word: lowerAnswer) {
             if isOriginal(word: lowerAnswer) {
-                if isOriginal(word: lowerAnswer) {
+                if isReal(word: lowerAnswer) {
                     usedWords.insert(answer, at: 0)
                     let indexPath = IndexPath(row: 0, section: 0)
                     tableView.insertRows(at: [indexPath], with: .automatic)
                     return
                 } else {
-                    errorTitle = "Word not recognized."
-                    errorMessage = "You cannot just create a word."
+                    if lowerAnswer.count <= 3 {
+                        showErrorMessage("short")
+                    } else {
+                        showErrorMessage("isReal")
+                    }
                 }
             } else {
-                errorTitle = "Word already used."
-                errorMessage = "Be more original."
+                if lowerAnswer == title?.lowercased() {
+                    showErrorMessage("title")
+                } else {
+                    showErrorMessage("isOriginal")
+                }
             }
         } else {
-            guard let title = title else { return }
-            errorTitle = "Word not possible."
-            errorMessage = "You can't spell that word from \(title.lowercased())."
+            showErrorMessage("isPossible")
         }
-        let ac = UIAlertController(title: errorTitle, message: errorMessage, preferredStyle: .alert)
-        ac.addAction(UIAlertAction(title: "OK", style: .default))
-        present(ac, animated: true)
     }
     
     func isPossible(word: String) -> Bool {
@@ -98,14 +95,45 @@ class ViewController: UITableViewController {
     }
     
     func isOriginal(word: String) -> Bool {
+        guard word != title?.lowercased() else { return false }
         return !usedWords.contains(word)
     }
     
     func isReal(word: String) -> Bool {
+        guard word.count > 3 else { return false }
         let checker = UITextChecker()
         let range = NSRange(location: 0, length: word.utf16.count)
         let misspelledRange = checker.rangeOfMisspelledWord(in: word, range: range, startingAt: 0, wrap: false, language: "en")
         return misspelledRange.location == NSNotFound
+    }
+    
+    func showErrorMessage(_ type: String){
+        let errorTitle: String
+        let errorMessage: String
+        guard let title = title else { return }
+        switch type {
+        case "isReal":
+            errorTitle = "Word not recognized."
+            errorMessage = "You cannot just create a word."
+        case "isOriginal":
+            errorTitle = "Word already used."
+            errorMessage = "Be more original."
+        case "isPossible":
+            errorTitle = "Word not possible."
+            errorMessage = "You can't spell that word from \(title.lowercased())."
+        case "short":
+            errorTitle = "Word too short."
+            errorMessage = "Your word must be more than three characters long."
+        case "title":
+            errorTitle = "Title word."
+            errorMessage = "Entering the title word is not accepted."
+        default:
+            errorTitle = "Unknown error occurred."
+            errorMessage = "An unknown error has occured."
+        }
+        let ac = UIAlertController(title: errorTitle, message: errorMessage, preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "OK", style: .default))
+        present(ac, animated: true)
     }
 
     // MARK: Delegate Methods
