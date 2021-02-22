@@ -5,6 +5,14 @@
 //  Created by Frank Solleveld on 22/02/2021.
 //
 
+/*
+ CHALLENGE TIME
+ 1. Disallow answers that are shorter than three letters (isReal 3 letter check) or are just our start word.
+ 2. Refactor all the else statements we just added so that they call a new Method called showErrorMessage().
+ 3. Add a left bar button item that calls startGame(),so that users can restart with a new word whenever they want to.
+ BONUS: Fix the uppercase and lowercase bug.
+ */
+
 import UIKit
 
 class ViewController: UITableViewController {
