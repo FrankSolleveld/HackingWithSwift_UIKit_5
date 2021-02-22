@@ -5,10 +5,6 @@
 //  Created by Frank Solleveld on 22/02/2021.
 //
 
-/*
- BONUS: Fix the uppercase and lowercase bug.
- */
-
 import UIKit
 
 class ViewController: UITableViewController {
@@ -58,7 +54,7 @@ class ViewController: UITableViewController {
         if isPossible(word: lowerAnswer) {
             if isOriginal(word: lowerAnswer) {
                 if isReal(word: lowerAnswer) {
-                    usedWords.insert(answer, at: 0)
+                    usedWords.insert(lowerAnswer, at: 0)
                     let indexPath = IndexPath(row: 0, section: 0)
                     tableView.insertRows(at: [indexPath], with: .automatic)
                     return
