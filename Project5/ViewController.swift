@@ -12,21 +12,12 @@ class ViewController: UITableViewController {
     // MARK: Custom Variables
     var allWords = [String]()
     var usedWords = [String]()
-    let defaults = UserDefaults.standard
 
     // MARK: Lifecycle Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(promptForAnswer))
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(startGame))
-        if let savedWords = defaults.object(forKey: "usedWords") as? Data {
-            let jsonDecoder = JSONDecoder()
-            do {
-                usedWords = try jsonDecoder.decode([String].self, from: savedWords)
-            } catch {
-                print("Failed to load used words.")
-            }
-        }
         if let startWordsURL = Bundle.main.url(forResource: "start", withExtension: "txt") {
             if let startWords = try? String(contentsOf: startWordsURL) {
                 allWords = startWords.components(separatedBy: "\n")
@@ -35,21 +26,31 @@ class ViewController: UITableViewController {
         if allWords.isEmpty {
             allWords = ["bench"]
         }
-        startGame()
-    }
-    
-    // MARK: Custom Methods
-    @objc func startGame(){
+        let defaults = UserDefaults.standard
         if let savedWord = defaults.object(forKey: "titleWord") as? Data {
             let jsonDecoder = JSONDecoder()
             do {
                 let result = try jsonDecoder.decode(String.self, from: savedWord)
                 title = result
+                if let savedWords = defaults.object(forKey: "usedWords") as? Data {
+                    let jsonDecoder = JSONDecoder()
+                    do {
+                        usedWords = try jsonDecoder.decode([String].self, from: savedWords)
+                        tableView.reloadData()
+                    } catch {
+                        print("Failed to load used words.")
+                    }
+                }
             } catch {
-                print("Failed to load used words.")
-                title = allWords.randomElement()
+                print("Failed to load title words.")
+                startGame()
             }
         }
+    }
+    
+    // MARK: Custom Methods
+    @objc func startGame(){
+        title = allWords.randomElement()
         saveTitle()
         usedWords.removeAll(keepingCapacity: true)
         save()
@@ -153,6 +154,7 @@ class ViewController: UITableViewController {
     }
     
     func save() {
+        let defaults = UserDefaults.standard
         let jsonEncoder = JSONEncoder()
         if let savedData = try? jsonEncoder.encode(usedWords) {
             defaults.set(savedData, forKey: "usedWords")
@@ -162,6 +164,7 @@ class ViewController: UITableViewController {
     }
     
     func saveTitle() {
+        let defaults = UserDefaults.standard
         let jsonEncoder = JSONEncoder()
         if let savedData = try? jsonEncoder.encode(usedWords) {
             defaults.set(savedData, forKey: "titleWord")
