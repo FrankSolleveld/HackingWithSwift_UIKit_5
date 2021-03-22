@@ -12,12 +12,21 @@ class ViewController: UITableViewController {
     // MARK: Custom Variables
     var allWords = [String]()
     var usedWords = [String]()
+    let defaults = UserDefaults.standard
 
     // MARK: Lifecycle Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(promptForAnswer))
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(startGame))
+        if let savedWords = defaults.object(forKey: "usedWords") as? Data {
+            let jsonDecoder = JSONDecoder()
+            do {
+                usedWords = try jsonDecoder.decode([String].self, from: savedWords)
+            } catch {
+                print("Failed to load used words.")
+            }
+        }
         if let startWordsURL = Bundle.main.url(forResource: "start", withExtension: "txt") {
             if let startWords = try? String(contentsOf: startWordsURL) {
                 allWords = startWords.components(separatedBy: "\n")
@@ -31,8 +40,19 @@ class ViewController: UITableViewController {
     
     // MARK: Custom Methods
     @objc func startGame(){
-        title = allWords.randomElement()
+        if let savedWord = defaults.object(forKey: "titleWord") as? Data {
+            let jsonDecoder = JSONDecoder()
+            do {
+                let result = try jsonDecoder.decode(String.self, from: savedWord)
+                title = result
+            } catch {
+                print("Failed to load used words.")
+                title = allWords.randomElement()
+            }
+        }
+        saveTitle()
         usedWords.removeAll(keepingCapacity: true)
+        save()
         tableView.reloadData()
     }
     
@@ -55,6 +75,7 @@ class ViewController: UITableViewController {
             if isOriginal(word: lowerAnswer) {
                 if isReal(word: lowerAnswer) {
                     usedWords.insert(lowerAnswer, at: 0)
+                    save()
                     let indexPath = IndexPath(row: 0, section: 0)
                     tableView.insertRows(at: [indexPath], with: .automatic)
                     return
@@ -129,6 +150,24 @@ class ViewController: UITableViewController {
         let ac = UIAlertController(title: errorTitle, message: errorMessage, preferredStyle: .alert)
         ac.addAction(UIAlertAction(title: "OK", style: .default))
         present(ac, animated: true)
+    }
+    
+    func save() {
+        let jsonEncoder = JSONEncoder()
+        if let savedData = try? jsonEncoder.encode(usedWords) {
+            defaults.set(savedData, forKey: "usedWords")
+        } else {
+            print("Failed to save used words.")
+        }
+    }
+    
+    func saveTitle() {
+        let jsonEncoder = JSONEncoder()
+        if let savedData = try? jsonEncoder.encode(usedWords) {
+            defaults.set(savedData, forKey: "titleWord")
+        } else {
+            print("Failed to save title word.")
+        }
     }
 
     // MARK: Delegate Methods
